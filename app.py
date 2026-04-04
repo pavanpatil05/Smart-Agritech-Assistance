@@ -1,55 +1,36 @@
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import Form
+from PIL import Image
 import tensorflow as tf
 import numpy as np
-from PIL import Image
 import io
 import json
-import os
 
+app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 MODEL_PATH = "plant_disease_mobilenetv2.h5"
 CLASS_PATH = "class_names.json"
 
-model = tf.keras.models.load_model(MODEL_PATH)
-
+# ✅ Load model once
+model = tf.keras.models.load_model(MODEL_PATH, compile=False)
 with open(CLASS_PATH, "r") as f:
     class_names = json.load(f)
 
-# ✅ NOW create mapping (after loading classes)
 PLANT_CLASS_MAP = {
     "grape": [i for i, c in enumerate(class_names) if "Grape" in c],
     "onion": [i for i, c in enumerate(class_names) if "Onion" in c],
     "tomato": [i for i, c in enumerate(class_names) if "Tomato" in c],
 }
 
-app = FastAPI()
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],   # change to frontend domain in production
-    allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
-MODEL_PATH = "plant_disease_mobilenetv2.h5"
-CLASS_PATH = "class_names.json"
-
-model = tf.keras.models.load_model(MODEL_PATH)
-
-with open(CLASS_PATH, "r") as f:
-    class_names = json.load(f)
-
 IMG_SIZE = (224, 224)
-
-
-@app.get("/")
-def home():
-    return {"status": "Plant Disease API Running 🚀"}
 
 
 def preprocess_image(image: Image.Image):
@@ -60,39 +41,43 @@ def preprocess_image(image: Image.Image):
     return img_array
 
 
-
-
 @app.post("/predict/")
-async def predict(
-    file: UploadFile = File(...),
-    plant_type: str = Form(...)
-):
+async def predict(file: UploadFile = File(...), plant_type: str = Form(...)):
+
     contents = await file.read()
+
+    # ✅ FIX 1: Force fresh image load every time
     image = Image.open(io.BytesIO(contents)).convert("RGB")
 
     processed_image = preprocess_image(image)
 
-    predictions = model.predict(processed_image)[0]
+    # ✅ FIX 2: Thread-safe prediction
+    predictions = model(processed_image, training=False).numpy()[0]
 
-    # Get indices for selected plant
     plant_type = plant_type.lower()
 
     if plant_type not in PLANT_CLASS_MAP:
-        return {"error": "Invalid plant type. Choose from grape/onion/tomato"}
+        return {"error": "Invalid plant type"}
 
     valid_indices = PLANT_CLASS_MAP[plant_type]
 
-    # Filter predictions
-    filtered_preds = {i: predictions[i] for i in valid_indices}
+    overall_best_index = np.argmax(predictions)
 
-    # Get best prediction from filtered
+    if overall_best_index not in valid_indices:
+        return {
+            "success": False,
+            "error": f"Upload valid {plant_type} leaf image"
+        }
+
+    filtered_preds = {i: float(predictions[i]) for i in valid_indices}
     best_index = max(filtered_preds, key=filtered_preds.get)
 
     predicted_class = class_names[best_index]
-    confidence = float(predictions[best_index]) * 100
+    confidence = filtered_preds[best_index] * 100
 
     return {
+        "success": True,
         "plant": plant_type,
         "prediction": predicted_class,
-        "confidence": f"{confidence:.2f}%"
+        "confidence": round(confidence, 2)
     }
