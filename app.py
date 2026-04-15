@@ -34,60 +34,51 @@ PLANT_CLASS_MAP = {
 IMG_SIZE = (224, 224)
 
 
-def predict_image(image):
+def preprocess_image(image):
     img = image.resize((224, 224))
     img = np.array(img)
     
     img = preprocess_input(img)   # 🔥 MUST MATCH TRAINING
     img = np.expand_dims(img, axis=0)
+    return img
 
-    preds = model.predict(img)
-    confidence = np.max(preds)
-    class_idx = np.argmax(preds)
 
-    if confidence < 0.6:
-        return "Not sure"
-
-    return class_names[class_idx]
 
 
 @app.post("/predict/")
 async def predict(file: UploadFile = File(...), plant_type: str = Form(...)):
 
     contents = await file.read()
-
-    # ✅ FIX 1: Force fresh image load every time
     image = Image.open(io.BytesIO(contents)).convert("RGB")
 
     processed_image = preprocess_image(image)
 
-    # ✅ FIX 2: Thread-safe prediction
     predictions = model(processed_image, training=False).numpy()[0]
 
     plant_type = plant_type.lower()
 
     if plant_type not in PLANT_CLASS_MAP:
-        return {"error": "Invalid plant type"}
+        return {"success": False, "error": "Invalid plant type"}
 
     valid_indices = PLANT_CLASS_MAP[plant_type]
-
-    overall_best_index = np.argmax(predictions)
-
-    if overall_best_index not in valid_indices:
-        return {
-            "success": False,
-            "error": f"Upload valid {plant_type} leaf image"
-        }
 
     filtered_preds = {i: float(predictions[i]) for i in valid_indices}
     best_index = max(filtered_preds, key=filtered_preds.get)
 
+    confidence = filtered_preds[best_index]
+
+    # ✅ Confidence check
+    if confidence < 0.6:
+        return {
+            "success": False,
+            "error": "Low confidence. Try better image"
+        }
+
     predicted_class = class_names[best_index]
-    confidence = filtered_preds[best_index] * 100
 
     return {
         "success": True,
         "plant": plant_type,
         "prediction": predicted_class,
-        "confidence": round(confidence, 2)
+        "confidence": round(confidence * 100, 2)
     }
