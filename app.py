@@ -1,5 +1,6 @@
 from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
+from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 from PIL import Image
 import tensorflow as tf
 import numpy as np
@@ -16,7 +17,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-MODEL_PATH = "plant_disease_mobilenetv2.h5"
+MODEL_PATH = "model1.keras"
 CLASS_PATH = "class_names.json"
 
 # ✅ Load model once
@@ -33,12 +34,21 @@ PLANT_CLASS_MAP = {
 IMG_SIZE = (224, 224)
 
 
-def preprocess_image(image: Image.Image):
-    image = image.resize(IMG_SIZE)
-    img_array = np.array(image)
-    img_array = tf.keras.applications.mobilenet_v2.preprocess_input(img_array)
-    img_array = np.expand_dims(img_array, axis=0)
-    return img_array
+def predict_image(image):
+    img = image.resize((224, 224))
+    img = np.array(img)
+    
+    img = preprocess_input(img)   # 🔥 MUST MATCH TRAINING
+    img = np.expand_dims(img, axis=0)
+
+    preds = model.predict(img)
+    confidence = np.max(preds)
+    class_idx = np.argmax(preds)
+
+    if confidence < 0.6:
+        return "Not sure"
+
+    return class_names[class_idx]
 
 
 @app.post("/predict/")
