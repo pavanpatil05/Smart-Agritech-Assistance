@@ -67,8 +67,8 @@ async def predict(file: UploadFile = File(...), plant_type: str = Form(...)):
 
     confidence = filtered_preds[best_index]
 
-    # ✅ Confidence check
-    if confidence < 0.6:
+    ✅ Confidence check
+    if confidence < 0.3:
         return {
             "success": False,
             "error": "Low confidence. Try better image"
