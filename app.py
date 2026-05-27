@@ -22,8 +22,18 @@ CLASS_PATH = "class_names.json"
 
 # ✅ Load model once
 model = tf.keras.models.load_model(MODEL_PATH, compile=False)
+
 with open(CLASS_PATH, "r") as f:
+
     class_names = json.load(f)
+
+# Marathi Disease Names
+
+with open("marathi_diseases.json", "r", encoding="utf-8") as f:
+    MARATHI_DISEASES = json.load(f)
+
+with open("marathi_solutions.json", "r", encoding="utf-8") as f:
+    MARATHI_SOLUTIONS = json.load(f)
 
 PLANT_CLASS_MAP = {
     "grape": [i for i, c in enumerate(class_names) if "Grape" in c],
@@ -67,7 +77,7 @@ async def predict(file: UploadFile = File(...), plant_type: str = Form(...)):
 
     confidence = filtered_preds[best_index]
 
-    ✅ Confidence check
+    #✅ Confidence check
     if confidence < 0.3:
         return {
             "success": False,
@@ -76,9 +86,25 @@ async def predict(file: UploadFile = File(...), plant_type: str = Form(...)):
 
     predicted_class = class_names[best_index]
 
+    marathi_disease = MARATHI_DISEASES.get(
+
+    predicted_class,
+
+    predicted_class
+    )
+
+    marathi_solution = MARATHI_SOLUTIONS.get(
+
+    predicted_class,
+
+    "योग्य उपाय उपलब्ध नाही"
+    )
+ 
     return {
-        "success": True,
-        "plant": plant_type,
-        "prediction": predicted_class,
-        "confidence": round(confidence * 100, 2)
+    "success": True,
+    "वनस्पती": plant_type,
+    # "disease_english": predicted_class,
+    "रोग": marathi_disease,
+    "उपाय": marathi_solution,
+    "confidence": round(confidence * 100, 2)
     }
