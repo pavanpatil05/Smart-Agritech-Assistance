@@ -6,8 +6,30 @@ import tensorflow as tf
 import numpy as np
 import io
 import json
+from fastapi import FastAPI
 
 app = FastAPI()
+print("App started")
+
+@app.get("/")
+
+def home():
+
+    return {"message": "API is running"}
+
+MODEL_PATH = "model1.keras"
+
+try:
+
+    print("Loading model...")
+
+    model = tf.keras.models.load_model(MODEL_PATH, compile=False)
+
+    print("Model loaded successfully")
+
+except Exception as e:
+
+    print("MODEL ERROR:", e)
 
 app.add_middleware(
     CORSMiddleware,
@@ -21,7 +43,7 @@ MODEL_PATH = "model1.keras"
 CLASS_PATH = "class_names.json"
 
 # ✅ Load model once
-model = tf.keras.models.load_model(MODEL_PATH, compile=False)
+# model = tf.keras.models.load_model(MODEL_PATH, compile=False)
 
 with open(CLASS_PATH, "r") as f:
 
@@ -87,16 +109,11 @@ async def predict(file: UploadFile = File(...), plant_type: str = Form(...)):
     predicted_class = class_names[best_index]
 
     marathi_disease = MARATHI_DISEASES.get(
-
     predicted_class,
-
     predicted_class
     )
-
     marathi_solution = MARATHI_SOLUTIONS.get(
-
     predicted_class,
-
     "योग्य उपाय उपलब्ध नाही"
     )
  
