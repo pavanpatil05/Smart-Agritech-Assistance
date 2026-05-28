@@ -17,7 +17,7 @@ def home():
 
     return {"message": "API is running"}
 
-MODEL_PATH = "model1.keras"
+MODEL_PATH = "model2.h5"
 
 try:
 
@@ -39,7 +39,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-MODEL_PATH = "model1.keras"
+MODEL_PATH = "model2.h5"
 CLASS_PATH = "class_names.json"
 
 # ✅ Load model once
