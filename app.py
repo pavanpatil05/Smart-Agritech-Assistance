@@ -7,6 +7,7 @@ import numpy as np
 import io
 import json
 from fastapi import FastAPI
+from keras.models import load_model
 
 app = FastAPI()
 print("App started")
@@ -17,13 +18,13 @@ def home():
 
     return {"message": "API is running"}
 
-MODEL_PATH = "model2.h5"
+MODEL_PATH = "model3.h5"
 
 try:
 
     print("Loading model...")
 
-    model = tf.keras.models.load_model(MODEL_PATH, compile=False)
+    model = load_model(MODEL_PATH, compile=False, safe_mode=False)
 
     print("Model loaded successfully")
 
@@ -39,7 +40,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-MODEL_PATH = "model2.h5"
+MODEL_PATH = "model3.h5"
 CLASS_PATH = "class_names.json"
 
 # ✅ Load model once
