@@ -19,18 +19,18 @@ def home():
     return {"message": "API is running"}
 
 MODEL_PATH = "model3.h5"
-
+model = None
 try:
 
     print("Loading model...")
 
-    model = load_model(MODEL_PATH, compile=False, safe_mode=False)
+    model = load_model(MODEL_PATH, compile=False)
 
-    print("Model loaded successfully")
+    print("✅ Model loaded successfully")
 
 except Exception as e:
 
-    print("MODEL ERROR:", e)
+    print("❌ MODEL ERROR:", str(e))
 
 app.add_middleware(
     CORSMiddleware,
@@ -40,7 +40,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-MODEL_PATH = "model3.h5"
 CLASS_PATH = "class_names.json"
 
 # ✅ Load model once
@@ -137,6 +136,12 @@ async def predict(file: UploadFile = File(...), plant_type: str = Form(...)):
         image = Image.open(io.BytesIO(contents)).convert("RGB")
 
         processed_image = preprocess_image(image)
+
+        if model is None:
+            return{
+                "success": False,
+                "error": "Model not loaded"
+            }
 
         predictions = model(processed_image, training=False).numpy()[0]
 
