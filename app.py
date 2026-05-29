@@ -10,19 +10,22 @@ import json
 app = FastAPI()
 print("App started")
 
-
 MODEL_PATH = "plant_disease.keras"
+model = None
 try:
 
     print("Loading model...")
 
-    model = tf.keras.models.load_model(MODEL_PATH, compile=False)
+    model = tf.keras.models.load_model(MODEL_PATH, compile=False, safe_mode=False)
 
     print("✅ Model loaded successfully")
 
 except Exception as e:
-
     print("❌ MODEL ERROR:", str(e))
+
+@app.get("/")
+def home():
+    return {"message": "API is running"}
 
 app.add_middleware(
     CORSMiddleware,
