@@ -10,13 +10,13 @@ import json
 app = FastAPI()
 print("App started")
 
-MODEL_PATH = "plant_disease.keras"
+MODEL_PATH = "plant_disease.h5"
 model = None
 try:
 
     print("Loading model...")
 
-    model = tf.keras.models.load_model(MODEL_PATH, compile=False, safe_mode=False)
+    model = tf.keras.models.load_model(MODEL_PATH, compile=False)
 
     print("✅ Model loaded successfully")
 
