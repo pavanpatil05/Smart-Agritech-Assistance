@@ -22,12 +22,27 @@ async def load_my_model():
         model = load_model("plant_disease.h5", compile=False)
         print("✅ Model loaded successfully")
     except Exception as e:
-        print("❌ MODEL ERROR:", e)
+        import traceback
+        print("❌ MODEL ERROR:")
+        traceback.print_exc()
 
 @app.get("/")
 def home():
     return {"message": "API is running"}
 
+
+@app.get("/test-model")
+def test_model():
+
+    if model is None:
+        return {
+            "status": "failed"
+        }
+
+    return {
+        "status": "loaded"
+    }
+    
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
