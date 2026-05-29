@@ -6,22 +6,23 @@ import tensorflow as tf
 import numpy as np
 import io
 import json
+from tensorflow.keras.models import load_model
 
 app = FastAPI()
 print("App started")
 
 MODEL_PATH = "plant_disease.h5"
 model = None
-try:
 
-    print("Loading model...")
-
-    model = tf.keras.models.load_model(MODEL_PATH, compile=False)
-
-    print("✅ Model loaded successfully")
-
-except Exception as e:
-    print("❌ MODEL ERROR:", str(e))
+@app.on_event("startup")
+async def load_my_model():
+    global model
+    try:
+        print("Loading model...")
+        model = load_model("plant_disease.h5", compile=False)
+        print("✅ Model loaded successfully")
+    except Exception as e:
+        print("❌ MODEL ERROR:", e)
 
 @app.get("/")
 def home():
