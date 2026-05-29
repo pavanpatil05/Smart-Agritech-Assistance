@@ -5,3 +5,4 @@ numpy
 pillow
 python-multipart
 h5py
+keras==2.15.0

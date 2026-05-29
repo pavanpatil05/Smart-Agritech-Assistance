@@ -39,18 +39,38 @@ CLASS_PATH = "class_names.json"
 
 # ✅ Load model once
 # model = tf.keras.models.load_model(MODEL_PATH, compile=False)
+# Load class names safely
+try:
+    with open(CLASS_PATH, "r") as f:
+        class_names = json.load(f)
 
-with open(CLASS_PATH, "r") as f:
+    print("✅ class_names loaded")
 
-    class_names = json.load(f)
+except Exception as e:
+    print("❌ CLASS FILE ERROR:", str(e))
+    class_names = []
 
-# Marathi Disease Names
+# Marathi disease names
+try:
+    with open("marathi_diseases.json", "r", encoding="utf-8") as f:
+        MARATHI_DISEASES = json.load(f)
 
-with open("marathi_diseases.json", "r", encoding="utf-8") as f:
-    MARATHI_DISEASES = json.load(f)
+    print("✅ Marathi diseases loaded")
 
-with open("marathi_solutions.json", "r", encoding="utf-8") as f:
-    MARATHI_SOLUTIONS = json.load(f)
+except Exception as e:
+    print("❌ Marathi disease file error:", str(e))
+    MARATHI_DISEASES = {}
+
+# Marathi solutions
+try:
+    with open("marathi_solutions.json", "r", encoding="utf-8") as f:
+        MARATHI_SOLUTIONS = json.load(f)
+
+    print("✅ Marathi solutions loaded")
+
+except Exception as e:
+    print("❌ Marathi solution file error:", str(e))
+    MARATHI_SOLUTIONS = {}
 
 PLANT_CLASS_MAP = {
     "grape": [i for i, c in enumerate(class_names) if "Grape" in c],
@@ -69,57 +89,6 @@ def preprocess_image(image):
     img = np.expand_dims(img, axis=0)
     return img
 
-
-
-
-# @app.post("/predict/")
-# async def predict(file: UploadFile = File(...), plant_type: str = Form(...)):
-
-#     contents = await file.read()
-#     image = Image.open(io.BytesIO(contents)).convert("RGB")
-
-#     processed_image = preprocess_image(image)
-
-#     predictions = model(processed_image, training=False).numpy()[0]
-
-#     plant_type = plant_type.lower()
-
-#     if plant_type not in PLANT_CLASS_MAP:
-#         return {"success": False, "error": "Invalid plant type"}
-
-#     valid_indices = PLANT_CLASS_MAP[plant_type]
-
-#     filtered_preds = {i: float(predictions[i]) for i in valid_indices}
-#     best_index = max(filtered_preds, key=filtered_preds.get)
-
-#     confidence = filtered_preds[best_index]
-
-#     #✅ Confidence check
-#     if confidence < 0.3:
-#         return {
-#             "success": False,
-#             "error": "Low confidence. Try better image"
-#         }
-
-#     predicted_class = class_names[best_index]
-
-#     marathi_disease = MARATHI_DISEASES.get(
-#     predicted_class,
-#     predicted_class
-#     )
-#     marathi_solution = MARATHI_SOLUTIONS.get(
-#     predicted_class,
-#     "योग्य उपाय उपलब्ध नाही"
-#     )
- 
-#     return {
-#     "success": True,
-#     "वनस्पती": plant_type,
-#     # "disease_english": predicted_class,
-#     "रोग": marathi_disease,
-#     "उपाय": marathi_solution,
-#     "confidence": round(confidence * 100, 2)
-#     }
 
 
 
@@ -185,3 +154,59 @@ async def predict(file: UploadFile = File(...), plant_type: str = Form(...)):
             "success": False,
             "error": str(e)
         }
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=10000)
+
+
+# @app.post("/predict/")
+# async def predict(file: UploadFile = File(...), plant_type: str = Form(...)):
+
+#     contents = await file.read()
+#     image = Image.open(io.BytesIO(contents)).convert("RGB")
+
+#     processed_image = preprocess_image(image)
+
+#     predictions = model(processed_image, training=False).numpy()[0]
+
+#     plant_type = plant_type.lower()
+
+#     if plant_type not in PLANT_CLASS_MAP:
+#         return {"success": False, "error": "Invalid plant type"}
+
+#     valid_indices = PLANT_CLASS_MAP[plant_type]
+
+#     filtered_preds = {i: float(predictions[i]) for i in valid_indices}
+#     best_index = max(filtered_preds, key=filtered_preds.get)
+
+#     confidence = filtered_preds[best_index]
+
+#     #✅ Confidence check
+#     if confidence < 0.3:
+#         return {
+#             "success": False,
+#             "error": "Low confidence. Try better image"
+#         }
+
+#     predicted_class = class_names[best_index]
+
+#     marathi_disease = MARATHI_DISEASES.get(
+#     predicted_class,
+#     predicted_class
+#     )
+#     marathi_solution = MARATHI_SOLUTIONS.get(
+#     predicted_class,
+#     "योग्य उपाय उपलब्ध नाही"
+#     )
+ 
+#     return {
+#     "success": True,
+#     "वनस्पती": plant_type,
+#     # "disease_english": predicted_class,
+#     "रोग": marathi_disease,
+#     "उपाय": marathi_solution,
+#     "confidence": round(confidence * 100, 2)
+#     }
+
