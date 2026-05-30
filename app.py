@@ -174,7 +174,13 @@ async def predict(file: UploadFile = File(...), plant_type: str = Form(...)):
         }
 
 
+import os
 
+@app.get("/files")
+def files():
+    return {
+        "files": os.listdir(".")
+    }
 
 # @app.post("/predict/")
 # async def predict(file: UploadFile = File(...), plant_type: str = Form(...)):
