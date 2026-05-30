@@ -18,19 +18,49 @@ model = None
 @app.on_event("startup")
 async def load_my_model():
     global model
+
+    import os
+    import traceback
+    print("========== STARTUP ==========")
+    print("Current directory:", os.getcwd())
+    print("Files:", os.listdir("."))
+
     try:
-        tf.keras.backend.clear_session()
-        print("Files:", os.listdir())
-        model = load_model("best_model.keras", compile=False)
-        print("✅ Model loaded successfully")
+        print("Loading best_model.keras ...")
+        model = load_model(
+            "best_model.keras",
+            compile=False
+        )
+        print("✅ MODEL LOADED SUCCESSFULLY")
     except Exception as e:
-        import traceback
-        print("❌ MODEL ERROR:")
+        print("❌ MODEL LOAD FAILED")
+        print("ERROR:", str(e))
         traceback.print_exc()
 
 @app.get("/")
 def home():
     return {"message": "API is running"}
+
+
+
+@app.get("/load-model")
+def load_model_debug():
+    global model
+
+    try:
+        model = load_model(
+            "best_model.keras",
+            compile=False
+        )
+        return {
+            "success": True
+        }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
 
 
 @app.get("/test-model")

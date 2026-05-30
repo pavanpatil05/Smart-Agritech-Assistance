@@ -1,7 +1,7 @@
 fastapi
 uvicorn
 tensorflow-cpu==2.15.0
-numpy
+numpy==1.26.4
 pillow
 python-multipart
 h5py
