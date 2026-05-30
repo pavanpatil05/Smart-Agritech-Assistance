@@ -45,23 +45,30 @@ def home():
 
 @app.get("/load-model")
 def load_model_debug():
-    global model
+
+    import traceback
 
     try:
-        model = keras.models.load_model(
+
+        from tensorflow.keras.models import load_model
+
+        m = load_model(
             "best_model.keras",
             compile=False
         )
+
         return {
             "success": True
         }
 
     except Exception as e:
+
         return {
             "success": False,
-            "error": str(e)
+            "error": str(e),
+            "type": str(type(e)),
+            "traceback": traceback.format_exc()
         }
-
 
 @app.get("/test-model")
 def test_model():
