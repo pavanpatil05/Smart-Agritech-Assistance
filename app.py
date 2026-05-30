@@ -6,20 +6,22 @@ import tensorflow as tf
 import numpy as np
 import io
 import json
+import os
 from tensorflow.keras.models import load_model
 
 app = FastAPI()
 print("App started")
 
-MODEL_PATH = "plant_disease.h5"
+MODEL_PATH = "best_model.keras"
 model = None
 
 @app.on_event("startup")
 async def load_my_model():
     global model
     try:
-        print("Loading model...")
-        model = load_model("plant_disease.h5", compile=False)
+        tf.keras.backend.clear_session()
+        print("Files:", os.listdir())
+        model = load_model("best_model.keras", compile=False)
         print("✅ Model loaded successfully")
     except Exception as e:
         import traceback
@@ -172,9 +174,6 @@ async def predict(file: UploadFile = File(...), plant_type: str = Form(...)):
         }
 
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=10000)
 
 
 # @app.post("/predict/")
