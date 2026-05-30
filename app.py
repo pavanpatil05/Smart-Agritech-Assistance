@@ -8,6 +8,7 @@ import io
 import json
 import os
 import keras
+from tensorflow.keras.models import load_model
 app = FastAPI()
 print("App started")
 
@@ -47,7 +48,7 @@ def load_model_debug():
     global model
 
     try:
-        model = keras.model.load_model(
+        model = keras.models.load_model(
             "best_model.keras",
             compile=False
         )
@@ -203,21 +204,23 @@ async def predict(file: UploadFile = File(...), plant_type: str = Form(...)):
         }
 
 
-@app.get("/version")
-def version():
+@app.get("/debug")
 
-    import tensorflow as tf
+def debug():
 
     import keras
 
     return {
 
-        "tensorflow": tf.__version__,
+        "keras_file": str(keras.__file__),
 
-        "keras": keras.__version__
+        "keras_version": keras.__version__,
+
+        "has_models": hasattr(keras, "models"),
+
+        "has_model": hasattr(keras, "model")
 
     }
-
 
 # @app.post("/predict/")
 # async def predict(file: UploadFile = File(...), plant_type: str = Form(...)):
